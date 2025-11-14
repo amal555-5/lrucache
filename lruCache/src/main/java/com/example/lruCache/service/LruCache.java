@@ -6,13 +6,16 @@ import java.util.Map;
 public class LruCache<K, V> {
     private final int capacity;
     private final Map<K, V> cache;
+    private Map.Entry<K, V> lastEvictedEntry = null;
 
     public LruCache(int capacity) {
         this.capacity=capacity;
         this.cache=new LinkedHashMap<>(capacity, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
-                return size()>capacity;
+                boolean shouldEvict = size() > capacity;
+                if (shouldEvict) lastEvictedEntry = eldest;
+                return shouldEvict;
             }
         };
     }
@@ -24,5 +27,8 @@ public class LruCache<K, V> {
     }
     public synchronized Map<K, V> getAll() {
         return new LinkedHashMap<>(cache);
+    }
+    public synchronized Map.Entry<K, V> getLastEvictedEntry() {
+        return lastEvictedEntry;
     }
 }

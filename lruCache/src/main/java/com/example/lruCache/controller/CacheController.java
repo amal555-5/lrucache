@@ -2,6 +2,7 @@ package com.example.lruCache.controller;
 
 import com.example.lruCache.service.CacheService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -13,19 +14,15 @@ public class CacheController {
     private CacheService cacheService;
 
     @PostMapping("/put")
-    public String put(@RequestParam String key, @RequestParam String value) {
-        cacheService.put(key, value);
-        return "Stored: (" + key + ", " + value + ")";
+    public ResponseEntity<Map<String, Object>> put(@RequestParam String key, @RequestParam String value) {
+        return ResponseEntity.ok(cacheService.put(key, value));
     }
-
     @GetMapping("/get/{key}")
-    public String get(@PathVariable String key) {
-        String value = cacheService.get(key);
-        return value != null ? "Value: " + value : "Key not found.";
+    public ResponseEntity<Map<String, Object>> get(@PathVariable String key) {
+        return ResponseEntity.ok(cacheService.get(key));
     }
-
     @GetMapping("/all")
-    public Map<String, String> getAll() {
-        return cacheService.getAll();
+    public ResponseEntity<Map<String, Object>> getAll() {
+        return ResponseEntity.ok(cacheService.getAll());
     }
 }
