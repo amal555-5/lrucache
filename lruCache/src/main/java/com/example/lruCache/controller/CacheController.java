@@ -1,28 +1,28 @@
 package com.example.lruCache.controller;
 
-import com.example.lruCache.service.CacheService;
+import com.example.lruCache.service.LruCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/cache")
 public class CacheController {
     @Autowired
-    private CacheService cacheService;
+    private LruCache cache;
 
-    @PostMapping("/put")
-    public ResponseEntity<Map<String, Object>> put(@RequestParam String key, @RequestParam String value) {
-        return ResponseEntity.ok(cacheService.put(key, value));
+    @GetMapping("/get")
+    public String getValue(@RequestParam String key) {
+        String value = cache.get(key);
+        return value == null ? "Key not found" : value;
     }
-    @GetMapping("/get/{key}")
-    public ResponseEntity<Map<String, Object>> get(@PathVariable String key) {
-        return ResponseEntity.ok(cacheService.get(key));
+    @PostMapping("/put")
+    public String putValue(@RequestParam String key, @RequestParam String value) {
+        cache.put(key, value);
+        return "Stored (" + key + " = " + value + ")";
     }
     @GetMapping("/all")
-    public ResponseEntity<Map<String, Object>> getAll() {
-        return ResponseEntity.ok(cacheService.getAll());
+    public Object getAll() {
+        return cache.getAll();
     }
 }

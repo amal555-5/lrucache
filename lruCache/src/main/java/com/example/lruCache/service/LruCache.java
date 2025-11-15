@@ -1,34 +1,60 @@
 package com.example.lruCache.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.springframework.stereotype.Component;
+import java.io.File;
+
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class LruCache<K, V> {
-    private final int capacity;
-    private final Map<K, V> cache;
-    private Map.Entry<K, V> lastEvictedEntry = null;
+@Component
+public class LruCache {
+    private static final String CACHE_FILE = "cache.json";
+    private static final int CAPACITY = 5;
 
-    public LruCache(int capacity) {
-        this.capacity=capacity;
-        this.cache=new LinkedHashMap<>(capacity, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
-                boolean shouldEvict = size() > capacity;
-                if (shouldEvict) lastEvictedEntry = eldest;
-                return shouldEvict;
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    private LinkedHashMap<String, String> cache =
+            new LinkedHashMap<>(CAPACITY, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+                    return size() > CAPACITY;
+                }
+            };
+    @PostConstruct
+    public void loadCacheFromDisk() {
+        try {
+            File file = new File(CACHE_FILE);
+            if (file.exists()) {
+                Map<String, String> data =
+                        mapper.readValue(file, new TypeReference<Map<String, String>>() {});
+                cache.putAll(data);
+                System.out.println("Loaded cache from disk: " + cache);
             }
-        };
+        } catch (Exception e) {
+            System.err.println("Failed to load cache: " + e.getMessage());
+        }
     }
-    public synchronized V get(K key) {
-        return cache.get(key);
+    @PreDestroy
+    public void saveCacheToDisk() {
+        try {
+            mapper.writerWithDefaultPrettyPrinter().writeValue(new File(CACHE_FILE), cache);
+            System.out.println("Saved cache to disk");
+        } catch (Exception e) {
+            System.err.println("Failed to save cache: " + e.getMessage());
+        }
     }
-    public synchronized void put(K key, V value) {
+    public synchronized void put(String key, String value) {
         cache.put(key, value);
     }
-    public synchronized Map<K, V> getAll() {
-        return new LinkedHashMap<>(cache);
+    public synchronized String get(String key) {
+        return cache.getOrDefault(key, null);
     }
-    public synchronized Map.Entry<K, V> getLastEvictedEntry() {
-        return lastEvictedEntry;
+    public synchronized Map<String, String> getAll() {
+        return cache;
     }
 }
